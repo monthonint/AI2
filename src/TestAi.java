@@ -17,7 +17,7 @@ public class TestAi implements Runnable{
         for(int i = 0; i < 100; i++){
             level.add(i);
         }
-        char[][] data = {{'1','2',' '},{'4','5','3'},{'7','8','6'} };
+        char[][] data = {{'1',' ','2'},{'4','5','3'},{'7','8','6'} };
         char[][] goal = {{'1','2','3'},{'4','5','6'},{'7','8',' '} };
         testview1 = new View(data);
         View testviewgoal = new View(goal);
@@ -54,7 +54,8 @@ public class TestAi implements Runnable{
         printTable(-1,testview1.getTable());
         System.out.println("tablegoal");
         printTable(-1,testviewgoal.getTable());
-        System.out.println("wrong tiles : " + heuristich1(testview1,testviewgoal));
+        System.out.println("heuristic_h1 : " + heuristic_h1(testview1,testviewgoal));
+        System.out.println("heuristic_h2 : "+ heuristic_h2(testview1,testviewgoal));
     }
     public void run(){
         if(!finished) {
@@ -351,7 +352,7 @@ public class TestAi implements Runnable{
             printTable(time,current_view.getTable());
         }
     }
-    public static int heuristich1(View current_view,View goal_view){
+    public static int heuristic_h1(View current_view,View goal_view){
         int counterror = 0;
         for(int i=0;i<goal_view.getTable().length;i++){
             for(int j=0;j<goal_view.getTable()[i].length;j++){
@@ -361,5 +362,40 @@ public class TestAi implements Runnable{
             }
         }
         return counterror;
+    }
+    public static int[] findpositionnumber(View view,char number){
+        int[] position = new int[2];
+        for(int i=0;i<view.getTable().length;i++){
+            for(int j=0;j<view.getTable()[i].length;j++){
+                if(view.getTable()[i][j]==number){
+                    position[0] = i;
+                    position[1] = j;
+                    break;
+                }
+            }
+        }
+        return position;
+    }
+    public static int heuristic_h2(View current_view,View goal_view){
+        int sumofdiatance = 0;
+        int count = 0;
+        for(int i=0;i<goal_view.getTable().length;i++){
+            for(int j=0;j<goal_view.getTable()[i].length;j++){
+                int[] position_current;
+                int[] position_goal;
+                if(count==0){
+                    position_current = findpositionnumber(current_view,' ');
+                    position_goal = findpositionnumber(goal_view,' ');
+                }
+                else{
+                    position_current = findpositionnumber(current_view,(char)('0'+count));
+                    position_goal = findpositionnumber(goal_view,(char)('0'+count));
+                }
+                //System.out.println(count+" : x : "+Math.abs(position_current[0]-position_goal[0])+" : y : "+Math.abs(position_current[1]-position_goal[1]));
+                sumofdiatance += (Math.abs(position_current[0]-position_goal[0])+Math.abs(position_current[1]-position_goal[1]));
+                count += 1;
+            }
+        }
+        return sumofdiatance;
     }
 }
