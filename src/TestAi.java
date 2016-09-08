@@ -17,40 +17,44 @@ public class TestAi implements Runnable{
         for(int i = 0; i < 100; i++){
             level.add(i);
         }
-        char[][] data = {{'6','4','7'},{'8','5',' '},{'3','2','1'} };
+        char[][] data = {{'1','2',' '},{'4','5','3'},{'7','8','6'} };
+        char[][] goal = {{'1','2','3'},{'4','5','6'},{'7','8',' '} };
         testview1 = new View(data);
-        Scanner input = new Scanner(System.in);
-        System.out.print("Do you want to set table (y,n)? : ");
-        char userinput = input.next().charAt(0);
-        if(userinput=='y'){
-            String number;
-            while(true){
-                number = input.nextLine();
-                if(number.length()==9)
-                    break;
-                else
-                    System.out.print("Put number 0-8 ex.012345678 : ");
-            }
-            int tempcount = 0;
-            for(int i=0;i<data.length;i++){
-                for(int j=0;j<data[i].length;j++){
-                    if(number.charAt(tempcount)=='0'){
-                        data[i][j] = ' ';
-                    }
-                    else{
-                        data[i][j] = number.charAt(tempcount);
-                    }
-                    tempcount+=1;
-                }
-            }
-            testview1.setValue(data);
-        }
-        else{
-            testview1.setValue(randomtable(testview1.getTable()));
-        }
-        //testview1 = new View(data);
-       //testview1.setValue(randomtable(testview1.getTable()));
+        View testviewgoal = new View(goal);
+//        Scanner input = new Scanner(System.in);
+//        System.out.print("Do you want to set table (y,n)? : ");
+//        char userinput = input.next().charAt(0);
+//        if(userinput=='y'){
+//            String number;
+//            while(true){
+//                number = input.nextLine();
+//                if(number.length()==9)
+//                    break;
+//                else
+//                    System.out.print("Put number 0-8 ex.012345678 : ");
+//            }
+//            int tempcount = 0;
+//            for(int i=0;i<data.length;i++){
+//                for(int j=0;j<data[i].length;j++){
+//                    if(number.charAt(tempcount)=='0'){
+//                        data[i][j] = ' ';
+//                    }
+//                    else{
+//                        data[i][j] = number.charAt(tempcount);
+//                    }
+//                    tempcount+=1;
+//                }
+//            }
+//            testview1.setValue(data);
+//        }
+//        else{
+//            testview1.setValue(randomtable(testview1.getTable()));
+//        }
+        System.out.println("tablecurrent");
         printTable(-1,testview1.getTable());
+        System.out.println("tablegoal");
+        printTable(-1,testviewgoal.getTable());
+        System.out.println("wrong tiles : " + heuristich1(testview1,testviewgoal));
     }
     public void run(){
         if(!finished) {
@@ -346,5 +350,16 @@ public class TestAi implements Runnable{
             time += 1;
             printTable(time,current_view.getTable());
         }
+    }
+    public static int heuristich1(View current_view,View goal_view){
+        int counterror = 0;
+        for(int i=0;i<goal_view.getTable().length;i++){
+            for(int j=0;j<goal_view.getTable()[i].length;j++){
+                if(current_view.getTable()[i][j]!=goal_view.getTable()[i][j]){
+                    counterror+=1;
+                }
+            }
+        }
+        return counterror;
     }
 }
