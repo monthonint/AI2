@@ -9,6 +9,7 @@ import java.util.*;
 public class TestAi implements Runnable{
     private static volatile boolean finished = false;
     static View testview1;
+    static View testviewgoal;
     private static volatile ArrayList<Integer> level = new ArrayList<>();
     private static volatile boolean lock = false;
     private static volatile boolean checklist = false;
@@ -20,7 +21,7 @@ public class TestAi implements Runnable{
         char[][] data = {{'1',' ','2'},{'4','5','3'},{'7','8','6'} };
         char[][] goal = {{'1','2','3'},{'4','5','6'},{'7','8',' '} };
         testview1 = new View(data);
-        View testviewgoal = new View(goal);
+        testviewgoal = new View(goal);
 //        Scanner input = new Scanner(System.in);
 //        System.out.print("Do you want to set table (y,n)? : ");
 //        char userinput = input.next().charAt(0);
@@ -55,18 +56,11 @@ public class TestAi implements Runnable{
         System.out.println("tablegoal");
         printTable(-1,testviewgoal.getTable());
         System.out.println("heuristic_h1 : " + heuristic_h1(testview1,testviewgoal));
-        System.out.println("heuristic_h2 : "+ heuristic_h2(testview1,testviewgoal));
+        System.out.println("heuristic_h2 : " + heuristic_h2(testview1,testviewgoal));
     }
     public void run(){
         if(!finished) {
-            if (level.size() > 0) {
-                accuireLock();
-                int current_level = level.remove(0);
-                release();
-                search(testview1, current_level);
-                System.out.println("Level " + current_level + " searched");
-                if(!finished) new Thread(new TestAi()).start();
-            }
+            search(testview1, 9999);
         }
     }
     public static void main(String[] args) {
@@ -211,17 +205,64 @@ public class TestAi implements Runnable{
             int[] cooridinate = findblank(initialState.getTable());
             int x = cooridinate[1];
             int y = cooridinate[0];
+            int[] h1_values = {9999, 9999, 9999, 9999};
+            int[] h2_values = {9999, 9999, 9999, 9999};
+            View nextView_up;
+            View nextView_down;
+            View nextView_left;
+            View nextView_right;
             if (y > 0) {  //able to slide up
-                expand(levellimit, 1, initialNode, 'u');
+                nextView_up = new View(slideUp(initialState.getTable()));
+                h1_values[0] = heuristic_h1(nextView_up, testviewgoal);
+                //h2_values[0] = heuristic_h2(nextView_up, testviewgoal);
+                //expand(levellimit, 1, initialNode, 'u');
             }
             if (y < 2) {  //able to slide down
-                expand(levellimit, 1, initialNode, 'd');
+                nextView_down = new View(slideUp(initialState.getTable()));
+                h1_values[1] = heuristic_h1(nextView_down, testviewgoal);
+                //h2_values[1] = heuristic_h2(nextView_down, testviewgoal);
+                //expand(levellimit, 1, initialNode, 'd');
             }
             if (x > 0) {  //able to slide left
-                expand(levellimit, 1, initialNode, 'l');
+                nextView_left = new View(slideUp(initialState.getTable()));
+                h1_values[2] = heuristic_h1(nextView_left, testviewgoal);
+                //h2_values[2] = heuristic_h2(nextView_left, testviewgoal);
+                //expand(levellimit, 1, initialNode, 'l');
             }
             if (x < 2) {  //able to slide right
-                expand(levellimit, 1, initialNode, 'r');
+                nextView_right = new View(slideUp(initialState.getTable()));
+                h1_values[3] = heuristic_h1(nextView_right, testviewgoal);
+                //h2_values[3] = heuristic_h2(nextView_right, testviewgoal);
+                //expand(levellimit, 1, initialNode, 'r');
+            }
+            if(h1_values[0] < h1_values[1] && h1_values[0] < h1_values[2] && h1_values[0] < h1_values[3]){
+                //Up has lowest h1 value;
+                expand(9999, 1, initialNode, 'u');
+            }
+            else if(h1_values[1] < h1_values[0] && h1_values[1] < h1_values[2] && h1_values[1] < h1_values[3]){
+                //Down
+                expand(9999, 1, initialNode, 'd');
+            }
+            else if(h1_values[2] < h1_values[0] && h1_values[2] < h1_values[1] && h1_values[2] < h1_values[3]){
+                //Left
+                expand(9999, 1, initialNode, 'l');
+            }
+            else if(h1_values[3] < h1_values[0] && h1_values[3] < h1_values[1] && h1_values[3] < h1_values[2]){
+                expand(9999, 1, initialNode, 'r');
+            }
+            else{
+                //Duplicate heuristic value; do something about it!!!
+                //use h2 to decide what direction should go
+                int lowest_heuristic1_value = 9999;
+                int lowest_heuristic2_value = 9999;
+                //find the highest duplicated value
+                for(Integer heuristic_value : h1_values){
+                    if(heuristic_value > lowest_heuristic1_value){
+                        lowest_heuristic1_value = heuristic_value;
+                    }
+                }
+                
+
             }
         }
     }
@@ -242,54 +283,58 @@ public class TestAi implements Runnable{
             case 'r':
                 newView = new View(slideRight(newView.getTable()));
                 break;
+            default:
         }
         Node currentNode = new Node(newView, parentNode, action);
         int[] cooridinate = findblank(newView.getTable());
         int x = cooridinate[1];
         int y = cooridinate[0];
-        if(depth < levellimit/* && !finished*/){
-            ++depth;
-            if(y > 0 && action != 'd'){  //able to slide up
-                expand(levellimit, depth, currentNode, 'u');
+        if(isGoal(currentNode.getCurrentView())) return true;
+        else {
+            int[] h1_values = {9999, 9999, 9999, 9999};
+            int[] h2_values = {9999, 9999, 9999, 9999};
+            View nextView_up;
+            View nextView_down;
+            View nextView_left;
+            View nextView_right;
+
+            if (y > 0 && action != 'd') {  //able to slide up
+                //expand(levellimit, depth, currentNode, 'u');
+                nextView_up = new View(slideUp(currentNode.getCurrentView().getTable()));
+                h1_values[0] = heuristic_h1(nextView_up, testviewgoal);
             }
-            if(y < 2 && action != 'u'){  //able to slide down
-                expand(levellimit, depth, currentNode, 'd');
+            if (y < 2 && action != 'u') {  //able to slide down
+                nextView_down = new View(slideUp(currentNode.getCurrentView().getTable()));
+                h1_values[1] = heuristic_h1(nextView_down, testviewgoal);
             }
-            if(x > 0 && action != 'r'){  //able to slide left
-                expand(levellimit, depth, currentNode, 'l');
+            if (x > 0 && action != 'r') {  //able to slide left
+                nextView_left = new View(slideUp(currentNode.getCurrentView().getTable()));
+                h1_values[2] = heuristic_h1(nextView_left, testviewgoal);
             }
-            if(x < 2 && action != 'l'){  //able to slide right
-                expand(levellimit, depth, currentNode, 'r');
+            if (x < 2 && action != 'l') {  //able to slide right
+                nextView_right = new View(slideUp(currentNode.getCurrentView().getTable()));
+                h1_values[3] = heuristic_h1(nextView_right, testviewgoal);
+            }
+            if(h1_values[0] < h1_values[1] && h1_values[0] < h1_values[2] && h1_values[0] < h1_values[3]){
+                //Up has lowest h1 value;
+                expand(9999, 1, currentNode, 'u');
+            }
+            else if(h1_values[1] < h1_values[0] && h1_values[1] < h1_values[2] && h1_values[1] < h1_values[3]){
+                //Down
+                expand(9999, 1, currentNode, 'd');
+            }
+            else if(h1_values[2] < h1_values[0] && h1_values[2] < h1_values[1] && h1_values[2] < h1_values[3]){
+                //Left
+                expand(9999, 1, currentNode, 'l');
+            }
+            else if(h1_values[3] < h1_values[0] && h1_values[3] < h1_values[1] && h1_values[3] < h1_values[2]){
+                expand(9999, 1, currentNode, 'r');
+            }
+            else{
+                //duplicate heuristic value; do something about it!!
             }
         }
-        else{
-            if(isGoal(currentNode.getCurrentView())/* && !finished*/){
-                ArrayList<Character> answerlist = new ArrayList<>();
-                while(currentNode.getParent() != null){
-                    answerlist.add(currentNode.getPerformed_action());
-                    currentNode = currentNode.getParent();
-                }
-                //if(finished) return false;
-                finished = true;
-                System.out.print("Answer found!!! @level " + depth + " : ");
-                //File file = new File("file.txt");
-                //FileWriter writer = new FileWriter(file, true);
-                for(int i = answerlist.size()-1; i >= 0; i--){
-                    System.out.print(answerlist.get(i) + " ");
-                    //writer.append(answerlist.get(i) + " ");
-                }
-                /*if(listaction.size() > 0 && answerlist.size() < listaction.size()) listaction = answerlist;
-                else*/
-                listaction = answerlist;
-                //writer.append('\n');
-                //writer.close();
-                System.out.println();
-                //System.exit(99);
-                checklist = true;
-                return true;
-            }
-            else return false;
-        }
+
         return false;
     }
 

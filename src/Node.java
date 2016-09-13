@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 
 /**
  * Created by Nut on 8/23/2016 AD.
@@ -6,7 +5,6 @@ import java.util.ArrayList;
 public class Node {
     View currentView;
     Node parent;
-    ArrayList<Node> children;
     char performed_action;
 
     public char getPerformed_action() {
@@ -21,8 +19,6 @@ public class Node {
         this.currentView = currentView;
         this.parent = parent;
         this.performed_action = performed_action;
-
-        this.children = new ArrayList<>();
     }
 
     public View getCurrentView() {
@@ -41,11 +37,4 @@ public class Node {
         this.parent = parent;
     }
 
-    public ArrayList<Node> getChildren() {
-        return children;
-    }
-
-    public void setChildren(ArrayList<Node> children) {
-        this.children = children;
-    }
 }
