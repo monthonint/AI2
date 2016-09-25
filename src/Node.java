@@ -46,7 +46,7 @@ public class Node {
         this.parent = parent;
         this.performed_action = performed_action;
         this.level = level;
-        this.weight = level*2;
+        this.weight = level*1;
         this.weight += TestAi.heuristic_h1(currentView, TestAi.testviewgoal);
         this.weight += TestAi.heuristic_h2(currentView, TestAi.testviewgoal);
 
