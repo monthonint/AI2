@@ -1,58 +1,47 @@
 /**
  * Created by month on 25/8/2559.
  */
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 public class TestAi implements Runnable {
     static View testview1;
     static View testviewgoal;
-    private static volatile boolean finished = false;
-    private static volatile ArrayList<Integer> level = new ArrayList<>();
-    private static volatile boolean lock = false;
-    private static volatile boolean checklist = false;
-    private static volatile ArrayList<Character> listaction = new ArrayList<>();
 
     static {
-        for (int i = 0; i < 100; i++) {
-            level.add(i);
-        }
         char[][] data = {{'2', ' ', '1'}, {'3', '5', '4'}, {'7', '8', '6'}};
         //char[][] data = {{'1', '2', '3'}, {'4', '5', '6'}, {'7', ' ', '8'}};
         char[][] goal = {{'1', '2', '3'}, {'4', '5', '6'}, {'7', '8', ' '}};
         testview1 = new View(data);
         testviewgoal = new View(goal);
-//        Scanner input = new Scanner(System.in);
-//        System.out.print("Do you want to set table (y,n)? : ");
-//        char userinput = input.next().charAt(0);
-//        if(userinput=='y'){
-//            String number;
-//            while(true){
-//                number = input.nextLine();
-//                if(number.length()==9)
-//                    break;
-//                else
-//                    System.out.print("Put number 0-8 ex.012345678 : ");
-//            }
-//            int tempcount = 0;
-//            for(int i=0;i<data.length;i++){
-//                for(int j=0;j<data[i].length;j++){
-//                    if(number.charAt(tempcount)=='0'){
-//                        data[i][j] = ' ';
-//                    }
-//                    else{
-//                        data[i][j] = number.charAt(tempcount);
-//                    }
-//                    tempcount+=1;
-//                }
-//            }
-//            testview1.setValue(data);
-//        }
-//        else{
-//            testview1.setValue(randomtable(testview1.getTable()));
-//        }
+        Scanner input = new Scanner(System.in);
+        System.out.print("Do you want to set table (y,n)? : ");
+        char userinput = input.next().charAt(0);
+        if(userinput=='y'){
+            String number;
+            while(true){
+                number = input.nextLine();
+                if(number.length()==9)
+                    break;
+                else
+                    System.out.print("Put number 0-8 ex.012345678 : ");
+            }
+            int tempcount = 0;
+            for(int i=0;i<data.length;i++){
+                for(int j=0;j<data[i].length;j++){
+                    if(number.charAt(tempcount)=='0'){
+                        data[i][j] = ' ';
+                    }
+                    else{
+                        data[i][j] = number.charAt(tempcount);
+                    }
+                    tempcount+=1;
+                }
+            }
+            testview1.setValue(data);
+        }
+        else{
+            testview1.setValue(randomtable(testview1.getTable()));
+        }
         System.out.println("tablecurrent");
         printTable(-1, testview1.getTable());
         System.out.println("tablegoal");
@@ -64,6 +53,7 @@ public class TestAi implements Runnable {
     public static void main(String[] args) {
 
         long startTime = System.currentTimeMillis();
+        //Do search and get last child answer Node
         Node lastnode_answer = search(testview1);
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
@@ -71,17 +61,20 @@ public class TestAi implements Runnable {
         System.out.println((totalTime) + " millisec.");
 
         ArrayList<Node> answerlist = new ArrayList<>();
+        //put every Node into a single list
         while (lastnode_answer != null) {
             answerlist.add(lastnode_answer);
             //printTable(++i, currentNode.getCurrentView().getTable());
             lastnode_answer = lastnode_answer.getParent();
         }
+        //get actions order by first to last actions
         for(int i = answerlist.size()-1; i >= 0; i--){
             char action = answerlist.get(i).getPerformed_action();
             System.out.print(action + " ");
         }
         System.out.println();
         int counter = 0;
+        //print table on the screen, show how moves lead to solution.
         for(int i = answerlist.size()-1; i >= 0; i--){
             printTable(counter++, answerlist.get(i).getCurrentView().getTable());
         }
@@ -277,21 +270,25 @@ public class TestAi implements Runnable {
     }
 
     /**
-     * This is the blind search limit depth first search
-     *
+     * Using heuristic functions to search for a solution
      * @param initialState initial state of 8 puzzle to be solve.
-     * @return ArrayList of char of actions to be perform.
+     * @return latest Node of the solution
      */
     public static Node search(View initialState) {
+        //Create an initial Node from an initial data
         int[] positions = findblank(initialState.getTable());
         initialState.setBlank_position_y(positions[0]);
         initialState.setBlank_position_x(positions[1]);
         Node initialNode = new Node(initialState, null, ' ', 0);
         initialNode.setWeight(heuristic_h1(initialState, TestAi.testviewgoal) + heuristic_h2(initialState, TestAi.testviewgoal));
+
+        //PriorityQueue help sorting Node(View) by their weight, lowest is poll out first.
         PriorityQueue<Node> queue = new PriorityQueue(new HeuristicComparator());
         queue.add(initialNode);
         Node currentNode = null;
         View currentState = null;
+
+        //Continue expand into directions until solution is found
         while (queue.size() > 0) {
             currentNode = queue.poll();
             currentState = currentNode.getCurrentView();
@@ -319,6 +316,12 @@ public class TestAi implements Runnable {
     }
     //get performActions
 
+    /**
+     * expand current Node (which has a state inside) into directions and return a new Node if success
+     * @param parentNode    current Node to be expand
+     * @param action        directions which blank position should move
+     * @return              Node contains a new state(table - view)
+     */
     public static Node expand(Node parentNode, char action) {
         View new_View;
         switch (action) {
@@ -451,13 +454,4 @@ public class TestAi implements Runnable {
         search(testview1);
     }
 
-    public void release() {
-        lock = false;
-    }
-
-    public void accuireLock() {
-        while (!lock) {
-            if (!lock) lock = true;
-        }
-    }
 }
